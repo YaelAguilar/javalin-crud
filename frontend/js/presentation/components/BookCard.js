@@ -1,7 +1,7 @@
 // frontend/js/presentation/components/BookCard.js
 
-import { Book } from '../../core/Book.js'; // Necesitamos la entidad Book para tipado
-import { UiHelper } from '../../utils/uiHelper.js'; // Para usar las notificaciones/confirmaciones
+import { Book } from '../../core/Book.js';
+import { UiHelper } from '../../utils/uiHelper.js';
 
 /**
  * @class BookCard
@@ -31,7 +31,11 @@ export class BookCard {
     createCardElement() {
         const bookItem = document.createElement('div');
         bookItem.className = 'book-item';
-        bookItem.dataset.id = this.book.id; // Almacenar el ID en el dataset
+        bookItem.dataset.id = this.book.id;
+
+        // Formatear las fechas de forma legible
+        const formattedCreatedAt = this.book.createdAt ? new Date(this.book.createdAt).toLocaleString() : 'N/A';
+        const formattedUpdatedAt = this.book.updatedAt ? new Date(this.book.updatedAt).toLocaleString() : 'N/A';
 
         bookItem.innerHTML = `
             <div class="book-details">
@@ -40,7 +44,7 @@ export class BookCard {
                 <p><strong>Año:</strong> ${this.book.publicationYear}</p>
                 <p><strong>ISBN:</strong> ${this.book.isbn}</p>
                 <div class="book-meta">
-                    <p>ID: ${this.book.id} | Creado: ${new Date(this.book.createdAt).toLocaleString()} | Actualizado: ${new Date(this.book.updatedAt).toLocaleString()}</p>
+                    <p>ID: ${this.book.id} | Creado: ${formattedCreatedAt} | Actualizado: ${formattedUpdatedAt}</p>
                 </div>
             </div>
             <div class="book-actions">
@@ -53,7 +57,6 @@ export class BookCard {
             </div>
         `;
 
-        // Añadir listeners a los botones de forma programática para evitar problemas
         bookItem.querySelector('.edit-btn').addEventListener('click', () => this.onEdit(this.book.id));
         bookItem.querySelector('.delete-btn').addEventListener('click', async () => {
             const confirmed = await UiHelper.showConfirmation(
