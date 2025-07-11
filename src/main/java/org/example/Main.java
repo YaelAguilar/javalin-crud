@@ -2,39 +2,57 @@ package org.example;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.example.configs.AppConfig;
-import org.example.configs.DbConfig;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
+import org.example.configs.AppConfig;
+import org.example.configs.DbConfig;
+import org.example.configs.ExceptionHandlerConfig; // <-- Importar el manejador de excepciones
+import org.example.controllers.BookController;     // <-- Importar el controlador
+import org.example.daos.IBookDAO;                 // <-- Importar la interfaz DAO
+import org.example.daos.impl.BookDAO;             // <-- Importar la implementación DAO
+import org.example.mappers.BookMapper;           // <-- Importar el mapper
+import org.example.routes.BookRoutes;             // <-- Importar las rutas
+import org.example.services.BookService;         // <-- Importar el servicio
+
 import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
-        // 1. Inicializar la configuración de la base de datos
-        DbConfig.init();
+        DbConfig.init(); // Inicializa la conexión a BD y crea la tabla 'books'
 
-        // 2. Configurar el mapeador de JSON
+        // --- Inyección de Dependencias Manual para el CRUD de Libros ---
+        IBookDAO bookDAO = new BookDAO();
+        BookMapper bookMapper = new BookMapper();
+        BookService bookService = new BookService(bookDAO, bookMapper);
+        BookController bookController = new BookController(bookService);
+        BookRoutes bookRoutes = new BookRoutes(bookController);
+
         ObjectMapper jacksonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-        // 3. Crear y configurar la instancia de Javalin
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(jacksonMapper));
             config.plugins.enableCors(cors -> cors.add(it -> {
-                it.anyHost();
+                it.anyHost(); // Permite peticiones de cualquier origen (para desarrollo)
             }));
                 config.plugins.enableDevLogging();
         });
 
-        // 4. Definir un endpoint de prueba
+        // --- Registrar el manejador de excepciones global ---
+        ExceptionHandlerConfig.register(app); 
+
+        // --- Registrar las rutas del recurso Book ---
+        bookRoutes.register(app);
+
+        // Endpoint de prueba (Bienvenida)
         app.get("/", ctx -> ctx.json(Map.of(
             "status", "Ok",
             "message", "¡La plantilla CRUD está funcionando!"
         )));
 
-        // 5. Configurar un "shutdown hook" para cerrar recursos de forma segura
+        // Configurar un "shutdown hook" para cerrar recursos de forma segura
         setupShutdownHook(app);
 
-        // 6. Iniciar el servidor
+        // Iniciar el servidor
         app.start(AppConfig.getServerHost(), AppConfig.getServerPort());
         
         System.out.println("Servidor iniciado en http://" + AppConfig.getServerHost() + ":" + AppConfig.getServerPort());
