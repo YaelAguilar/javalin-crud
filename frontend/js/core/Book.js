@@ -1,9 +1,6 @@
-// frontend/js/core/Book.js
-
 /**
  * @class Book
  * @description Representa la entidad de dominio pura de un libro.
- * Es inmutable y no contiene lógica de negocio compleja ni dependencias de UI/API.
  */
 export class Book {
     /**
@@ -12,7 +9,7 @@ export class Book {
      * @param {string} author - El autor del libro.
      * @param {number} publicationYear - El año de publicación del libro.
      * @param {string} isbn - El ISBN del libro.
-     * @param {Array<number>} createdAtArray - La fecha y hora de creación como array [año, mes, día, hora, min, seg].
+     * @param {Array<number>} createdAtArray - La fecha y hora de creación como array.
      * @param {Array<number>} updatedAtArray - La fecha y hora de la última actualización como array.
      */
     constructor(id, title, author, publicationYear, isbn, createdAtArray, updatedAtArray) {
@@ -37,8 +34,8 @@ export class Book {
         this._author = author.trim();
         this._publicationYear = publicationYear;
         this._isbn = isbn.trim();
-        
-        // Convertir el array de fecha a una cadena ISO 8601 válida o a null si no existe
+
+        // Convertir el array de fecha a una cadena ISO 8601 válida
         this._createdAt = createdAtArray ? this._formatDateArrayToISO(createdAtArray) : null;
         this._updatedAt = updatedAtArray ? this._formatDateArrayToISO(updatedAtArray) : null;
     }
@@ -53,7 +50,7 @@ export class Book {
     get updatedAt() { return this._updatedAt; }
 
     /**
-     * Crea una instancia de Book a partir de un objeto JSON (típicamente de la API).
+     * Crea una instancia de Book a partir de un objeto JSON.
      * @param {object} data - Objeto JSON con los datos del libro.
      * @returns {Book} Una nueva instancia de Book.
      */
@@ -67,28 +64,24 @@ export class Book {
             data.author,
             data.publicationYear,
             data.isbn,
-            data.createdAt, // Pasamos el array tal cual del JSON
-            data.updatedAt  // Pasamos el array tal cual del JSON
+            data.createdAt,
+            data.updatedAt
         );
     }
 
     /**
-     * Método privado para formatear un array de fecha [year, month, day, hour, minute, second]
-     * a una cadena ISO 8601 (YYYY-MM-DDTHH:mm:ss).
-     * Nota: El mes en JavaScript es 0-indexado, pero en Java LocalDateTime es 1-indexado.
+     * Método privado para formatear un array de fecha a una cadena ISO 8601.
      * @param {Array<number>} dateArray - Array de componentes de fecha.
      * @returns {string} Cadena de fecha en formato ISO 8601.
      */
     _formatDateArrayToISO(dateArray) {
-        // Asegúrate de que el mes sea 0-indexado para el constructor de Date si lo usas así.
-        // Pero para string ISO, puedes usar los valores tal cual.
         const year = dateArray[0];
-        const month = String(dateArray[1]).padStart(2, '0'); // Mes de Java es 1-12, pad con 0
+        const month = String(dateArray[1]).padStart(2, '0');
         const day = String(dateArray[2]).padStart(2, '0');
         const hour = String(dateArray[3]).padStart(2, '0');
         const minute = String(dateArray[4]).padStart(2, '0');
         const second = String(dateArray[5]).padStart(2, '0');
-        // Construye la cadena ISO directamente.
+        
         return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
     }
 }

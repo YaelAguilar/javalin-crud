@@ -3,81 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BiblioGestión | CRUD de Libros</title>
+    <title>BiblioGestión Pro | Sistema de Gestión de Biblioteca</title>
     
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- SweetAlert2 para notificaciones atractivas -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 para notificaciones -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Nuestros estilos CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Header Principal -->
     <header class="main-header">
-        <div class="container header-content">
-            <i class="fas fa-book logo-icon"></i>
-            <h1>BiblioGestión</h1>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-book-open logo-icon"></i>
+                    <div class="logo-text">
+                        <h1>BiblioGestión</h1>
+                        <span class="logo-subtitle">Sistema Profesional</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-icon" id="theme-toggle" title="Cambiar tema">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="stats-mini">
+                        <span id="total-books-header">0</span>
+                        <small>libros</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
+    <!-- Navegación de pestañas -->
+    <nav class="tab-navigation">
+        <div class="container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="tab-btn" data-tab="form">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Gestionar</span>
+                </button>
+                <button class="tab-btn" data-tab="library">
+                    <i class="fas fa-books"></i>
+                    <span>Biblioteca</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
     <main class="container">
-        <!-- Sección de Formulario -->
-        <section class="card form-section">
-            <h2 class="card-title"><i class="fas fa-plus-circle"></i> <span id="form-title">Añadir Nuevo Libro</span></h2>
-            <form id="book-form" class="book-form">
-                <input type="hidden" id="book-id">
-                
-                <div class="form-group">
-                    <label for="title">Título:</label>
-                    <input type="text" id="title" required placeholder="Ej: Cien Años de Soledad">
+        <!-- Dashboard Tab -->
+        <section id="dashboard-tab" class="tab-content active">
+            <div class="dashboard-header">
+                <h2><i class="fas fa-chart-line"></i> Dashboard</h2>
+                <p>Resumen general de tu biblioteca</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-books">0</h3>
+                        <p>Total de Libros</p>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="author">Autor:</label>
-                    <input type="text" id="author" required placeholder="Ej: Gabriel García Márquez">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="recent-books">0</h3>
+                        <p>Agregados Hoy</p>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="publicationYear">Año Publicación:</label>
-                    <input type="number" id="publicationYear" required placeholder="Ej: 1967">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="unique-authors">0</h3>
+                        <p>Autores Únicos</p>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="isbn">ISBN:</label>
-                    <input type="text" id="isbn" required placeholder="Ej: 978-0307455805">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="avg-year">-</h3>
+                        <p>Año Promedio</p>
+                    </div>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" id="submit-button" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Añadir Libro
-                    </button>
-                    <button type="button" id="cancel-button" class="btn btn-secondary" style="display: none;">
-                        <i class="fas fa-times-circle"></i> Cancelar Edición
-                    </button>
+            </div>
+
+            <div class="dashboard-actions">
+                <button class="btn btn-primary btn-large" onclick="switchTab('form')">
+                    <i class="fas fa-plus"></i>
+                    Agregar Nuevo Libro
+                </button>
+                <button class="btn btn-secondary btn-large" onclick="switchTab('library')">
+                    <i class="fas fa-search"></i>
+                    Ver Biblioteca
+                </button>
+            </div>
+
+            <div class="recent-activity">
+                <h3><i class="fas fa-history"></i> Libros Recientes</h3>
+                <div id="recent-books-list" class="recent-books-grid">
+                    <!-- Los libros recientes se cargarán aquí -->
                 </div>
-            </form>
+            </div>
         </section>
 
-        <!-- Sección de Lista de Libros -->
-        <section class="card list-section">
-            <h2 class="card-title"><i class="fas fa-books"></i> Libros en Biblioteca</h2>
+        <!-- Form Tab -->
+        <section id="form-tab" class="tab-content">
+            <div class="form-header">
+                <h2><i class="fas fa-plus-circle"></i> <span id="form-title">Agregar Nuevo Libro</span></h2>
+                <p>Completa la información del libro</p>
+            </div>
+            
+            <div class="form-container">
+                <form id="book-form" class="book-form">
+                    <input type="hidden" id="book-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="title">
+                                <i class="fas fa-heading"></i>
+                                Título *
+                            </label>
+                            <input type="text" id="title" required placeholder="Ej: Cien Años de Soledad">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="author">
+                                <i class="fas fa-user"></i>
+                                Autor *
+                            </label>
+                            <input type="text" id="author" required placeholder="Ej: Gabriel García Márquez">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="publicationYear">
+                                <i class="fas fa-calendar"></i>
+                                Año de Publicación *
+                            </label>
+                            <input type="number" id="publicationYear" required placeholder="Ej: 1967" min="1" max="2024">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="isbn">
+                                <i class="fas fa-barcode"></i>
+                                ISBN *
+                            </label>
+                            <input type="text" id="isbn" required placeholder="Ej: 978-0307455805">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="submit-button" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            <span>Agregar Libro</span>
+                        </button>
+                        <button type="button" id="cancel-button" class="btn btn-secondary" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            <span>Cancelar Edición</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Library Tab -->
+        <section id="library-tab" class="tab-content">
+            <div class="library-header">
+                <div class="library-title">
+                    <h2><i class="fas fa-books"></i> Biblioteca</h2>
+                    <p>Todos tus libros organizados</p>
+                </div>
+                <div class="library-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Buscar por título, autor o ISBN...">
+                    </div>
+                    <div class="view-controls">
+                        <button class="btn btn-icon active" id="grid-view" title="Vista de cuadrícula">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="btn btn-icon" id="list-view" title="Vista de lista">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="library-stats">
+                <span id="showing-count">Mostrando 0 de 0 libros</span>
+            </div>
+            
             <div id="book-list" class="book-grid">
-                <!-- Los libros se cargarán aquí -->
-                <p class="loading-message">Cargando libros...</p>
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando libros...</p>
+                </div>
             </div>
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="main-footer">
         <div class="container">
-            <p>© 2024 BiblioGestión. Plantilla CRUD por tu profesor.</p>
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2024 BiblioGestión Pro. Sistema de gestión de biblioteca.</p>
+                </div>
+                <div class="footer-links">
+                    <span>Versión 2.0</span>
+                </div>
+            </div>
         </div>
     </footer>
 
-    <!-- Nuestro script principal, que cargará los demás módulos JS -->
+    <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

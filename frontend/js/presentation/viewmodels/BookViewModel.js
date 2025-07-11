@@ -65,12 +65,12 @@ export class BookViewModel {
      * @param {string|null} id - El ID del libro (string para PUT, null/empty para POST).
      * @param {object} bookData - Los datos del libro a guardar (sin ID).
      */
-    async saveBook(id, bookData) { // <-- Cambio aquí: id y bookData por separado
+    async saveBook(id, bookData) {
         this.setLoading(true);
         try {
             let savedBook;
             if (id) { // Si id existe, es una actualización (PUT)
-                savedBook = await this.bookRepository.updateBook(parseInt(id, 10), bookData); // Pasar id como número
+                savedBook = await this.bookRepository.updateBook(parseInt(id, 10), bookData);
             } else { // Si id no existe, es una creación (POST)
                 savedBook = await this.bookRepository.createBook(bookData);
             }
@@ -79,7 +79,7 @@ export class BookViewModel {
             return savedBook;
         } catch (error) {
             this.setError(error);
-            throw error; // Propagar el error para que la UI pueda reaccionar (ej. no cerrar formulario)
+            throw error; // Propagar el error para que la UI pueda reaccionar
         } finally {
             this.setLoading(false);
         }

@@ -1,5 +1,3 @@
-// frontend/js/data/services/BookApiService.js
-
 import { API_BASE_URL } from '../../config/apiConfig.js';
 
 /**
@@ -9,16 +7,15 @@ import { API_BASE_URL } from '../../config/apiConfig.js';
  */
 export class BookApiService {
     constructor() {
-        this.baseUrl = `${API_BASE_URL}/books`; // URL específica para el recurso de libros
+        this.baseUrl = `${API_BASE_URL}/books`;
     }
 
     /**
      * Realiza una petición genérica a la API.
-     * @param {string} endpoint - El endpoint específico (ej. '/123', o vacío para listar/crear).
-     * @param {string} method - El método HTTP (GET, POST, PUT, DELETE).
-     * @param {object} [body=null] - El cuerpo de la petición para POST/PUT.
+     * @param {string} endpoint - El endpoint específico.
+     * @param {string} method - El método HTTP.
+     * @param {object} [body=null] - El cuerpo de la petición.
      * @returns {Promise<object>} La respuesta JSON de la API.
-     * @throws {Error} Si la petición HTTP no es exitosa (status fuera de 2xx).
      */
     async request(endpoint = '', method = 'GET', body = null) {
         const url = `${this.baseUrl}${endpoint}`;
@@ -36,7 +33,7 @@ export class BookApiService {
         try {
             const response = await fetch(url, options);
 
-            // Si la respuesta es 204 No Content (DELETE exitoso), no hay body
+            // Si la respuesta es 204 No Content (DELETE exitoso)
             if (response.status === 204) {
                 return { success: true, message: 'Operación exitosa (No Content)' };
             }
@@ -44,17 +41,14 @@ export class BookApiService {
             const responseData = await response.json();
 
             if (!response.ok) {
-                // Si la respuesta no es OK (ej. 400, 404, 500), lanzamos un error
-                // El cuerpo JSON del error debe tener 'message' y 'success'.
                 const errorMessage = responseData.message || `Error ${response.status}: ${response.statusText}`;
                 throw new Error(errorMessage);
             }
 
-            return responseData; // Devolvemos el JSON de la respuesta exitosa
+            return responseData;
         } catch (error) {
             console.error(`Error en la petición ${method} ${url}:`, error);
-            // Relanzamos el error para que sea manejado por la capa superior (Repository)
-            throw error; 
+            throw error;
         }
     }
 

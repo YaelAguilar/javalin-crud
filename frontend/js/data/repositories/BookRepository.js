@@ -1,7 +1,5 @@
-// frontend/js/data/repositories/BookRepository.js
-
-import { Book } from '../../core/Book.js'; // Importamos la entidad Book
-import { BookApiService } from '../services/BookApiService.js'; // Importamos el servicio API
+import { Book } from '../../core/Book.js';
+import { BookApiService } from '../services/BookApiService.js';
 
 /**
  * @class BookRepository
@@ -27,12 +25,12 @@ export class BookRepository {
         try {
             const response = await this.bookApiService.getAll();
             if (response.success && Array.isArray(response.data)) {
-                return response.data.map(Book.fromJson); // Mapeamos el JSON a entidades Book
+                return response.data.map(Book.fromJson);
             }
             throw new Error(response.message || 'Error desconocido al obtener todos los libros.');
         } catch (error) {
             console.error('Error en BookRepository.getAllBooks:', error);
-            throw error; // Relanzamos el error para la capa superior
+            throw error;
         }
     }
 
@@ -45,7 +43,7 @@ export class BookRepository {
         try {
             const response = await this.bookApiService.getById(id);
             if (response.success && response.data) {
-                return Book.fromJson(response.data); // Mapeamos el JSON a una entidad Book
+                return Book.fromJson(response.data);
             }
             throw new Error(response.message || `Libro con ID ${id} no encontrado.`);
         } catch (error) {
@@ -94,12 +92,12 @@ export class BookRepository {
     /**
      * Elimina un libro por su ID.
      * @param {number} id - El ID del libro a eliminar.
-     * @returns {Promise<boolean>} Una promesa que resuelve a `true` si la eliminación fue exitosa.
+     * @returns {Promise<boolean>} Una promesa que resuelve a true si la eliminación fue exitosa.
      */
     async deleteBook(id) {
         try {
             const response = await this.bookApiService.delete(id);
-            if (response.success) { // El 204 No Content se maneja en ApiService
+            if (response.success) {
                 return true;
             }
             throw new Error(response.message || `Error desconocido al eliminar libro con ID ${id}.`);
