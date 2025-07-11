@@ -13,37 +13,42 @@ import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
-        DbConfig.init(); // Inicializa la conexión a BD y crea la tabla 'books'
+        DbConfig.init(); 
 
-        // --- Inyección de Dependencias a través del inyector ---
         BookRoutes bookRoutes = DependencyInjector.getBookRoutes();
 
         ObjectMapper jacksonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(jacksonMapper));
+            
+            // --- IMPLEMENTACIÓN DE CORS ---
             config.plugins.enableCors(cors -> cors.add(it -> {
-                it.anyHost();
+                it.anyHost(); // Permite peticiones de CUALQUIER origen (*)
+                /*
+                *it.allowedOrigins("http://localhost:3000", "https://tuedominiofrontend.com", "https://otrodminio.net");
+                *it.allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"); // Métodos HTTP permitidos
+                *it.allowedHeaders("Content-Type", "Authorization"); // Cabeceras permitidas en las peticiones
+                *it.allowCredentials = true; // Permite el envío de cookies de autenticación, si se usan
+                *it.exposeHeader("Authorization"); // Expone cabeceras de respuesta que el cliente JS puede leer 
+                */
             }));
+            // --- FIN DE IMPLEMENTACIÓN DE CORS ---
+
                 config.plugins.enableDevLogging();
         });
 
-        // --- Registrar el manejador de excepciones global ---
         ExceptionHandlerConfig.register(app); 
 
-        // --- Registrar las rutas del recurso Book ---
         bookRoutes.register(app);
 
-        // Endpoint de prueba (Bienvenida)
         app.get("/", ctx -> ctx.json(Map.of(
             "status", "Ok",
             "message", "¡La plantilla CRUD está funcionando!"
         )));
 
-        // Configurar un "shutdown hook" para cerrar recursos de forma segura
         setupShutdownHook(app);
 
-        // Iniciar el servidor
         app.start(AppConfig.getServerHost(), AppConfig.getServerPort());
         
         System.out.println("Servidor iniciado en http://" + AppConfig.getServerHost() + ":" + AppConfig.getServerPort());
