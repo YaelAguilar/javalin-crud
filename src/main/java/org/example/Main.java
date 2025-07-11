@@ -6,13 +6,8 @@ import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 import org.example.configs.AppConfig;
 import org.example.configs.DbConfig;
-import org.example.configs.ExceptionHandlerConfig; // <-- Importar el manejador de excepciones
-import org.example.controllers.BookController;     // <-- Importar el controlador
-import org.example.daos.IBookDAO;                 // <-- Importar la interfaz DAO
-import org.example.daos.impl.BookDAO;             // <-- Importar la implementación DAO
-import org.example.mappers.BookMapper;           // <-- Importar el mapper
-import org.example.routes.BookRoutes;             // <-- Importar las rutas
-import org.example.services.BookService;         // <-- Importar el servicio
+import org.example.configs.ExceptionHandlerConfig;
+import org.example.routes.BookRoutes;
 
 import java.util.Map;
 
@@ -20,19 +15,15 @@ public class Main {
     public static void main(String[] args) {
         DbConfig.init(); // Inicializa la conexión a BD y crea la tabla 'books'
 
-        // --- Inyección de Dependencias Manual para el CRUD de Libros ---
-        IBookDAO bookDAO = new BookDAO();
-        BookMapper bookMapper = new BookMapper();
-        BookService bookService = new BookService(bookDAO, bookMapper);
-        BookController bookController = new BookController(bookService);
-        BookRoutes bookRoutes = new BookRoutes(bookController);
+        // --- Inyección de Dependencias a través del inyector ---
+        BookRoutes bookRoutes = DependencyInjector.getBookRoutes();
 
         ObjectMapper jacksonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(jacksonMapper));
             config.plugins.enableCors(cors -> cors.add(it -> {
-                it.anyHost(); // Permite peticiones de cualquier origen (para desarrollo)
+                it.anyHost();
             }));
                 config.plugins.enableDevLogging();
         });
