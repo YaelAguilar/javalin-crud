@@ -1,6 +1,3 @@
-// frontend/js/main.js
-
-// Importar todas las clases necesarias para ensamblar la aplicación
 import { BookApiService } from './data/services/BookApiService.js';
 import { BookRepository } from './data/repositories/BookRepository.js';
 import { BookViewModel } from './presentation/viewmodels/BookViewModel.js';

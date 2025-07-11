@@ -1,7 +1,4 @@
-// frontend/js/presentation/viewmodels/BookViewModel.js
-
-import { Book } from '../../core/Book.js'; // Necesitamos la entidad Book para la lista
-import { BookRepository } from '../../data/repositories/BookRepository.js'; // Accedemos al Repositorio
+import { BookRepository } from '../../data/repositories/BookRepository.js';
 
 /**
  * @class BookViewModel
@@ -18,16 +15,16 @@ export class BookViewModel {
             throw new Error('BookViewModel: Se requiere una instancia válida de BookRepository.');
         }
         this.bookRepository = bookRepository;
-        this.books = []; // Lista de libros observables
-        this.currentBook = null; // Libro actualmente en edición
-        this.error = null; // Último error ocurrido
-        this.loading = false; // Estado de carga para la UI
+        this.books = [];
+        this.currentBook = null;
+        this.error = null;
+        this.loading = false;
 
         // Callbacks para notificar a la vista sobre cambios de estado o errores
-        this.onBooksChanged = () => {}; // Se llamará cuando `books` se actualice
-        this.onBookSelected = () => {}; // Se llamará cuando `currentBook` se establezca para edición
-        this.onError = () => {}; // Se llamará cuando ocurra un error
-        this.onLoadingChanged = () => {}; // Se llamará cuando `loading` cambie
+        this.onBooksChanged = () => {};
+        this.onBookSelected = () => {};
+        this.onError = () => {};
+        this.onLoadingChanged = () => {};
     }
 
     /**
@@ -65,17 +62,16 @@ export class BookViewModel {
 
     /**
      * Crea un nuevo libro o actualiza uno existente.
-     * @param {object} bookData - Los datos del libro (puede incluir ID para actualización).
+     * @param {string|null} id - El ID del libro (string para PUT, null/empty para POST).
+     * @param {object} bookData - Los datos del libro a guardar (sin ID).
      */
-    async saveBook(bookData) {
+    async saveBook(id, bookData) { // <-- Cambio aquí: id y bookData por separado
         this.setLoading(true);
         try {
             let savedBook;
-            if (bookData.id) {
-                // Actualizar
-                savedBook = await this.bookRepository.updateBook(bookData.id, bookData);
-            } else {
-                // Crear
+            if (id) { // Si id existe, es una actualización (PUT)
+                savedBook = await this.bookRepository.updateBook(parseInt(id, 10), bookData); // Pasar id como número
+            } else { // Si id no existe, es una creación (POST)
                 savedBook = await this.bookRepository.createBook(bookData);
             }
             this.error = null;
@@ -115,8 +111,10 @@ export class BookViewModel {
      * Resetea el libro en edición.
      */
     resetCurrentBook() {
-        this.currentBook = null;
-        this.onBookSelected(null); // Notificar a la vista
+        if (this.currentBook !== null) {
+            this.currentBook = null;
+            this.onBookSelected(null);
+        }
     }
 
     /**

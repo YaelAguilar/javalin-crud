@@ -1,8 +1,6 @@
-// frontend/js/presentation/views/BookView.js
-
-import { UiHelper } from '../../utils/uiHelper.js'; // Para mostrar notificaciones y confirmaciones
-import { BookCard } from '../components/BookCard.js'; // Para renderizar tarjetas de libros
-import { BookViewModel } from '../viewmodels/BookViewModel.js'; // Necesitamos el ViewModel
+import { UiHelper } from '../../utils/uiHelper.js';
+import { BookCard } from '../components/BookCard.js';
+import { BookViewModel } from '../viewmodels/BookViewModel.js';
 
 /**
  * @class BookView
@@ -41,9 +39,6 @@ export class BookView {
         // Configurar event listeners
         this.bookForm.addEventListener('submit', this.handleSubmit.bind(this));
         this.cancelButton.addEventListener('click', this.handleCancelEdit.bind(this));
-
-        // Inicializar la vista
-        this.resetForm();
     }
 
     /**
@@ -56,7 +51,7 @@ export class BookView {
         this.formTitle.textContent = 'Añadir Nuevo Libro';
         this.cancelButton.style.display = 'none';
         this.isbnInput.disabled = false; // Habilitar ISBN para añadir
-        this.bookViewModel.resetCurrentBook(); // Notificar al ViewModel que ya no hay libro en edición
+        this.bookViewModel.resetCurrentBook(); // Notificar al ViewModel que el libro en edición ha sido reseteado
     }
 
     /**
@@ -70,13 +65,14 @@ export class BookView {
             this.authorInput.value = book.author;
             this.publicationYearInput.value = book.publicationYear;
             this.isbnInput.value = book.isbn;
-            this.isbnInput.disabled = true; // El ISBN no debe ser editable en PUT si es clave única
+            this.isbnInput.disabled = true; // No permitir editar ISBN en PUT (por restricción UNIQUE)
 
             this.submitButton.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar Libro';
             this.formTitle.textContent = `Editar Libro (ID: ${book.id})`;
             this.cancelButton.style.display = 'inline-block';
         } else {
-            this.resetForm(); // Si book es null, resetear el formulario
+            // Si book es null (indicando un reset desde el ViewModel), simplemente resetear el formulario.
+            this.resetForm();
         }
     }
 
@@ -111,13 +107,13 @@ export class BookView {
      * @param {Event} event - El evento de envío del formulario.
      */
     async handleSubmit(event) {
-        event.preventDefault(); // Evitar recarga de la página
+        event.preventDefault(); // Evitar el envío por defecto del formulario
 
-        const id = bookIdInput.value ? parseInt(bookIdInput.value, 10) : null;
-        const title = titleInput.value;
-        const author = authorInput.value;
-        const publicationYear = parseInt(publicationYearInput.value, 10);
-        const isbn = isbnInput.value;
+        const id = this.bookIdInput.value; // Este ID se usará para la URL en PUT (es un string o vacío)
+        const title = this.titleInput.value.trim();
+        const author = this.authorInput.value.trim();
+        const publicationYear = parseInt(this.publicationYearInput.value, 10);
+        const isbn = this.isbnInput.value.trim();
 
         // Validaciones básicas de la vista (adicionales a las del servicio)
         if (!title || !author || !publicationYear || !isbn) {
@@ -129,14 +125,23 @@ export class BookView {
             return;
         }
 
-        const bookData = { id, title, author, publicationYear, isbn };
+        // --- CORRECCIÓN CLAVE AQUÍ: Construir el objeto de datos que se enviará en el BODY ---
+        // Este objeto `bookDataForBody` contendrá SOLO las propiedades esperadas por BookCreateDTO/BookUpdateDTO.
+        // El 'id' se pasa como un argumento SEPARADO al ViewModel.
+        const bookDataForBody = { 
+            title, 
+            author, 
+            publicationYear, 
+            isbn 
+        }; 
 
         try {
-            await this.bookViewModel.saveBook(bookData);
-            // Si el save fue exitoso, el ViewModel recargará los libros y la View los renderizará.
-            // Aquí solo mostramos la notificación y reseteamos el formulario.
+            // Pasamos el ID (string o vacío) y el objeto de datos del body al ViewModel.
+            // El ViewModel determinará si es POST o PUT y usará el 'id' en la URL.
+            await this.bookViewModel.saveBook(id, bookDataForBody); // <-- Cambio aquí: pasar ID y data por separado
+            
             UiHelper.showNotification('Éxito', id ? 'Libro actualizado con éxito.' : 'Libro añadido con éxito.', 'success');
-            this.resetForm();
+            this.resetForm(); // Resetear el formulario después de una operación exitosa
         } catch (error) {
             // El error ya fue manejado por handleViewModelError o es un error de red
             UiHelper.showNotification('Error', error.message || 'Ocurrió un error inesperado.', 'error');
@@ -156,8 +161,6 @@ export class BookView {
      */
     handleViewModelError(error) {
         if (error) {
-            // Solo mostramos la notificación si el error es significativo
-            // Los errores de validación de formulario ya son manejados antes
             console.error('Error en ViewModel:', error);
             UiHelper.showNotification('Error de Operación', error.message || 'Ha ocurrido un error.', 'error');
         }
@@ -168,12 +171,16 @@ export class BookView {
      * @param {boolean} isLoading - True si está cargando, false si no.
      */
     handleLoadingState(isLoading) {
+        // Deshabilitar/habilitar elementos del formulario
         UiHelper.setElementEnabled(this.submitButton, !isLoading);
         UiHelper.setElementEnabled(this.cancelButton, !isLoading);
         UiHelper.setElementEnabled(this.titleInput, !isLoading);
         UiHelper.setElementEnabled(this.authorInput, !isLoading);
         UiHelper.setElementEnabled(this.publicationYearInput, !isLoading);
-        UiHelper.setElementEnabled(this.isbnInput, !isLoading && !this.bookIdInput.value); // Deshabilitar ISBN en modo edición
+        // Habilitar/deshabilitar ISBN: solo si NO está en modo edición (bookIdInput.value está vacío)
+        UiHelper.setElementEnabled(this.isbnInput, !isLoading && !this.bookIdInput.value); 
+        
+        // Efecto visual en la lista de libros durante la carga
         this.bookListDiv.style.opacity = isLoading ? '0.7' : '1';
         UiHelper.toggleLoadingIndicator(this.loadingMessageElement, isLoading);
     }
