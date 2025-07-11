@@ -2,6 +2,7 @@ package org.example.daos.impl;
 
 import org.example.configs.DbConfig;
 import org.example.daos.IBookDAO;
+import org.example.exceptions.DataAccessException;
 import org.example.models.Book;
 import org.intellij.lang.annotations.Language;
 
@@ -27,15 +28,24 @@ public class BookDAO implements IBookDAO {
 
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    book.setId(generatedKeys.getInt(1)); // Asignamos el ID generado
+                    book.setId(generatedKeys.getInt(1));
                 } else {
                     throw new SQLException("La creación del libro falló, no se obtuvo ID.");
                 }
             }
             return book;
-        } catch (SQLException e) {
-            System.err.println("Error al guardar el libro: " + e.getMessage());
-            throw new RuntimeException("Error de base de datos al guardar el libro.", e);
+        } catch (SQLIntegrityConstraintViolationException e) { // <-- Captura específica de duplicados
+            // MySQL lanza esta si hay una restricción UNIQUE o PRIMARY KEY violada (código 1062 para 'Duplicate entry')
+            if (e.getErrorCode() == 1062) { 
+                System.err.println("Error de duplicado en DB (ISBN): " + e.getMessage());
+                throw new DataAccessException("Clave duplicada: El ISBN ya existe.", e); // Lanzar DataAccessException
+            }
+            // Si no es un duplicado, relanzar como DataAccessException genérico
+            System.err.println("Error de integridad de BD al guardar el libro: " + e.getMessage());
+            throw new DataAccessException("Error de integridad en la base de datos al guardar el libro.", e);
+        } catch (SQLException e) { // <-- Captura otras excepciones SQL
+            System.err.println("Error SQL al guardar el libro: " + e.getMessage());
+            throw new DataAccessException("Error de base de datos al guardar el libro.", e); // Relanzar como DataAccessException
         }
     }
 
@@ -53,7 +63,7 @@ public class BookDAO implements IBookDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error al buscar libro por ID: " + e.getMessage());
-            throw new RuntimeException("Error de base de datos al buscar el libro por ID.", e);
+            throw new DataAccessException("Error de base de datos al buscar el libro por ID.", e); // Usar DataAccessException
         }
         return Optional.empty();
     }
@@ -71,7 +81,7 @@ public class BookDAO implements IBookDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error al buscar todos los libros: " + e.getMessage());
-            throw new RuntimeException("Error de base de datos al buscar todos los libros.", e);
+            throw new DataAccessException("Error de base de datos al buscar todos los libros.", e); // Usar DataAccessException
         }
         return books;
     }
@@ -96,7 +106,7 @@ public class BookDAO implements IBookDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error al actualizar el libro: " + e.getMessage());
-            throw new RuntimeException("Error de base de datos al actualizar el libro.", e);
+            throw new DataAccessException("Error de base de datos al actualizar el libro.", e); // Usar DataAccessException
         }
         return Optional.empty();
     }
@@ -113,13 +123,10 @@ public class BookDAO implements IBookDAO {
             return affectedRows > 0; // True si se eliminó al menos una fila
         } catch (SQLException e) {
             System.err.println("Error al eliminar el libro: " + e.getMessage());
-            throw new RuntimeException("Error de base de datos al eliminar el libro.", e);
+            throw new DataAccessException("Error de base de datos al eliminar el libro.", e); // Usar DataAccessException
         }
     }
         
-    /**
-     * Método de utilidad para mapear una fila de ResultSet a un objeto Book.
-     */
     private Book mapRowToBook(ResultSet rs) throws SQLException {
         Book book = new Book();
         book.setId(rs.getInt("id"));

@@ -1,6 +1,8 @@
 package org.example.services;
 
 import org.example.daos.IBookDAO;
+import org.example.exceptions.DataAccessException;
+import org.example.exceptions.DuplicateIsbnException;
 import org.example.mappers.BookMapper;
 import org.example.models.Book;
 import org.example.models.dtos.BookCreateDTO;
@@ -10,14 +12,10 @@ import org.example.models.dtos.BookUpdateDTO;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Servicio que contiene la lógica de negocio para las operaciones CRUD de libros.
- * Orquesta el uso de la capa DAO y la capa de mapeo.
- */
 public class BookService {
 
     private final IBookDAO bookDAO;
-    private final BookMapper bookMapper; // Inyectar el mapper
+    private final BookMapper bookMapper;
 
     public BookService(IBookDAO bookDAO, BookMapper bookMapper) {
         this.bookDAO = bookDAO;
@@ -40,14 +38,22 @@ public class BookService {
         }
         // Opcional: Validar formato ISBN
 
-        // Mapear DTO a entidad
-        Book newBook = bookMapper.toEntity(dto);
-        
-        // Guardar en la base de datos
-        Book savedBook = bookDAO.save(newBook);
+        try {
+            // Mapear DTO a entidad
+            Book newBook = bookMapper.toEntity(dto);
+            
+            // Guardar en la base de datos
+            Book savedBook = bookDAO.save(newBook);
 
-        // Mapear entidad guardada a DTO de respuesta
-        return bookMapper.toDto(savedBook);
+            // Mapear entidad guardada a DTO de respuesta
+            return bookMapper.toDto(savedBook);
+        } catch (DataAccessException e) { // <-- Capturar DataAccessException
+            // Comprobar si el mensaje indica un duplicado de ISBN específico
+            if (e.getMessage().contains("Clave duplicada: El ISBN ya existe.")) { 
+                throw new DuplicateIsbnException("El ISBN '" + dto.isbn() + "' ya está registrado.", e);
+            }
+            throw e; // Relanzar otras DataAccessExceptions que no sean de ISBN duplicado
+        }
     }
 
     /**
@@ -97,11 +103,16 @@ public class BookService {
         bookMapper.updateEntityFromDto(existingBook, dto);
 
         // Guardar los cambios en la base de datos
-        Book updatedBook = bookDAO.update(existingBook)
-                .orElseThrow(() -> new RuntimeException("No se pudo actualizar el libro con ID: " + id));
-        
-        // Mapear la entidad actualizada a DTO de respuesta
-        return bookMapper.toDto(updatedBook);
+        try {
+            Book updatedBook = bookDAO.update(existingBook)
+                    .orElseThrow(() -> new RuntimeException("No se pudo actualizar el libro con ID: " + id));
+            return bookMapper.toDto(updatedBook);
+        } catch (DataAccessException e) { // <-- Capturar DataAccessException también en update
+            if (e.getMessage().contains("Clave duplicada: El ISBN ya existe.")) { 
+                throw new DuplicateIsbnException("El ISBN '" + dto.isbn() + "' ya está registrado.", e);
+            }
+            throw e;
+        }
     }
 
     /**
